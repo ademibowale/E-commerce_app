@@ -1,25 +1,24 @@
 class Admin::ProductsController < AdminController
-  before_action :set_admin_product, only: %i[ show edit update destroy ]
 
-  # GET /admin/products or /admin/products.json
+  before_action :set_admin_product, only: %i[show edit update destroy]
+
   def index
-    @admin_products = Product.all
+      @admin_products = Product.all  # Fetch all products
+  
+      # Or, filter products based on criteria:
+      # @admin_products = Product.where(active: true)
+    
+     if params[:query].present?
+      @pagy, @admin_products = pagy(Product.where("name LIKE ?", "%#{params[:query]}%"))
+    else
+      
+    end
   end
 
-  # GET /admin/products/1 or /admin/products/1.json
-  def show
-  end
-
-  # GET /admin/products/new
   def new
     @admin_product = Product.new
   end
 
-  # GET /admin/products/1/edit
-  def edit
-  end
-
-  # POST /admin/products or /admin/products.json
   def create
     @admin_product = Product.new(admin_product_params)
 
@@ -36,14 +35,16 @@ class Admin::ProductsController < AdminController
 
   # PATCH/PUT /admin/products/1 or /admin/products/1.json
   def update
-    respond_to do |format|
-      if @admin_product.update(admin_product_params)
-        format.html { redirect_to admin_product_url(@admin_product), notice: "Product was successfully updated." }
-        format.json { render :show, status: :ok, location: @admin_product }
-      else
-        format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @admin_product.errors, status: :unprocessable_entity }
+    @admin_product = Product.find(params[:id])
+    if @admin_product.update(admin_product_params.reject { |k| k["images"] })
+      if admin_product_params["images"]
+        admin_product_params["images"].each do |image|
+          @admin_product.images.attach(image)
+        end
       end
+      redirect_to admin_products_path, notice: "Product updated successfully"
+    else
+      render :edit, status: :unprocessable_entity
     end
   end
 
@@ -65,6 +66,7 @@ class Admin::ProductsController < AdminController
 
     # Only allow a list of trusted parameters through.
     def admin_product_params
-      params.require(:product).permit(:name, :description, :price, :category_id, :active ,images: [])
+      params.require(:product).permit(:name, :description, :price, :category_id, :active, images: [])
     end
 end
+
