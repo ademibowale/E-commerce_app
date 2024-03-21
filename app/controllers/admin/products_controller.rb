@@ -1,24 +1,29 @@
 class Admin::ProductsController < AdminController
+  before_action :set_admin_product, only: %i[ show edit update destroy ]
 
-  before_action :set_admin_product, only: %i[show edit update destroy]
-
+  # GET /admin/products or /admin/products.json
   def index
-      @admin_products = Product.all  # Fetch all products
-  
-      # Or, filter products based on criteria:
-      # @admin_products = Product.where(active: true)
-    
-     if params[:query].present?
+    if params[:query].present?
       @pagy, @admin_products = pagy(Product.where("name LIKE ?", "%#{params[:query]}%"))
     else
-      
+      @pagy, @admin_products = pagy(Product.all)
     end
   end
 
+  # GET /admin/products/1 or /admin/products/1.json
+  def show
+  end
+
+  # GET /admin/products/new
   def new
     @admin_product = Product.new
   end
 
+  # GET /admin/products/1/edit
+  def edit
+  end
+
+  # POST /admin/products or /admin/products.json
   def create
     @admin_product = Product.new(admin_product_params)
 
@@ -69,4 +74,3 @@ class Admin::ProductsController < AdminController
       params.require(:product).permit(:name, :description, :price, :category_id, :active, images: [])
     end
 end
-
